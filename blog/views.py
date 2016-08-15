@@ -2,6 +2,11 @@ from flask import render_template
 from flask import request, redirect, url_for
 from . import app
 from .database import session, Entry
+from flask import flash
+from flask.ext.login import login_user, login_required, logout_user, current_user
+from werkzeug.security import check_password_hash
+from .database import User
+from flask.ext.login import login_required
 
 PAGINATE_BY = 10
 
@@ -32,7 +37,8 @@ def entries(page=1):
         total_pages=total_pages
     )
     
-@app.route("/add", methods=["GET"])
+@app.route("/add", methods=["POST"])
+@login_required
 def add_entry_post():
     entry = Entry(
         title=request.form["title"],
@@ -41,3 +47,56 @@ def add_entry_post():
     session.add(entry)
     session.commit()
     return redirect(url_for("entries"))
+    
+@app.route("/add", methods=["GET"])
+@login_required
+def add_entry_get():
+    return render_template("add_entry.html")
+    
+@app.route("/entry/<int:id>")
+def view_entry(id):
+    entry = session.query.filter_by(id = id)
+    return render_template("entries.html", entry=entry)
+
+@app.route("/edit/entry/<int:id>", methods=["GET", "POST"])
+def edit_entry(id):
+    entry = session.query.get(id = id)
+    return render_template("edit_entry.html", entry=entry)
+
+def edit_entry(id):
+    entry = session.query.get(id = id)
+    entry.title=request.form["title"]
+    entry.content=request.form["content"]
+    return redirect(url_for("entries"))
+    
+@app.route("/delete/entry/<int:id>/", methods=["GET", "POST"])
+def delete_entry_get(id):
+    entry = session.query.get(id = id)
+    return render_template("delete_entry.html", entry = entry)
+    
+def delete_entry_post(id):
+    entry = session.query.get(id = id)
+    session.delete(entry)
+    session.commit()
+    return redirect(url_for("entries"))
+    
+@app.route("/login", methods=["GET"])
+def login_get():
+    return render_template("login.html")    
+    
+@app.route("/login", methods=["POST"])
+def login_post():
+    email = request.form["email"]
+    password = request.form["password"]
+    user = session.query(User).filter_by(email=email).first()
+    if not user or not check_password_hash(user.password, password):
+        flash("Incorrect username or password", "danger")
+        return redirect(url_for("login_get"))
+
+    login_user(user)
+    return redirect(request.args.get('next') or url_for("entries"))
+    
+@app.route('/logout', methods=['GET'])
+def logout():
+    logout_user()
+    return redirect(url_for('entries'))

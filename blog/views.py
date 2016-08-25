@@ -59,11 +59,11 @@ def view_entry(id):
     return render_template("entries.html", entry=entry)
 
 @app.route("/edit/entry/<int:id>", methods=["GET", "POST"])
-def edit_entry(id):
+def edit_entry_get(id):
     entry = session.query.get(id = id)
     return render_template("edit_entry.html", entry=entry)
 
-def edit_entry(id):
+def edit_entry_post(id):
     entry = session.query.get(id = id)
     entry.title=request.form["title"]
     entry.content=request.form["content"]

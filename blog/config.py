@@ -1,6 +1,4 @@
 import os
-import unittest
-
 class DevelopmentConfig(object):
     SQLALCHEMY_DATABASE_URI = "postgresql://ubuntu:thinkful@localhost:5432/blogful"
     DEBUG = True
@@ -21,3 +19,8 @@ class FilterTests(unittest.TestCase):
     def test_date_format_none(self):
         formatted = dateformat(None, "%y/%m/%d")
         self.assertEqual(formatted, None)
+        
+class TravisConfig(object):
+    SQLALCHEMY_DATABASE_URI = "postgresql://localhost:5432/blogful-test"
+    DEBUG = False
+    SECRET_KEY = "Not secret"
